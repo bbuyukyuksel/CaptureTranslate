@@ -5,12 +5,14 @@ import PyQt5
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore, QtGui
 
-#from MainWindowSignals import Updater
+from GUI.MainWindowSignals import Translater
 
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+
 
         self.title = "Test"
         #self.winIcon()
@@ -18,40 +20,43 @@ class MainWindow(QtWidgets.QMainWindow):
         self.left = 0
         self.width = 600
         self.height = 600
-
+        
+        
         self.initWindow()
 
     def initWindow(self):
         #self.showFullScreen()
+        
         self.setObjectName("body")
         #self.setWindowIcon()
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setFixedSize(self.width, self.height)
+        
+        # Signals
+        LabelUpdater = Translater()
+        LabelUpdater.signal_data_ready.connect(self.onSignalDataReady)
+        LabelUpdater.start()
 
+    def initLayout(self):
         # Set Layout
         widget = QtWidgets.QWidget()
         self.setCentralWidget(widget)
-        UI = self.UI()
-        widget.setLayout(UI)
+        self.__UI = self.UI()
+        widget.setLayout(self.__UI)
 
+    def onSignalDataReady(self, items):
+        self.items = items
+        self.initWindow()
+        self.initLayout()
+        self.show()
 
-        # Signals
-        '''
-        LabelUpdater = Updater()
-        LabelUpdater.update.connect(self.onLabelUpdate)
-        LabelUpdater.start()
-        '''
-
-        #self.show()
-
-    def onLabelUpdate(self, text):
-        pass
-        #print("Updated", text)
     
     def on_clicked(self):
         button = self.sender()
-        print(button.objectName())
+        selected_id = int(button.objectName())
+        print("Selected Item:", self.items[selected_id])        
+        
         self.hide()
 
     def UI(self):
@@ -80,25 +85,29 @@ class MainWindow(QtWidgets.QMainWindow):
         MainBox.addWidget(QtWidgets.QLabel("Please select translate"))
 
         layout = QtWidgets.QVBoxLayout()
-        for i in range(15):        
-            row = QtWidgets.QHBoxLayout()
-            
-            PushButton = QtWidgets.QPushButton()
-            PushButton.setObjectName(f"Button#{i}")
-            PushButton.setIcon(QtGui.QIcon("assets/icons/check-mark-96.png"))
-            PushButton.setIconSize(QtCore.QSize(30,30))
-            PushButton.setFixedWidth(70)
-            PushButton.setStyleSheet(StyleSheet)
-            PushButton.clicked.connect(self.on_clicked)
-            row.addWidget(PushButton)
-        
-            label = QtWidgets.QLabel(f"TR {i}")
-            row.addWidget(label)
 
-            label = QtWidgets.QLabel(f"EN {i}")
-            row.addWidget(label)
+        if self.items:
+            layout.addWidget(QtWidgets.QLabel(f"Clipboard Item: {self.items[0].En}"))
+            for ID, item in enumerate(self.items):        
+                row = QtWidgets.QHBoxLayout()
 
-            layout.addLayout(row)
+                PushButton = QtWidgets.QPushButton()
+                PushButton.setObjectName(str(ID))
+                PushButton.setIcon(QtGui.QIcon("assets/icons/check-mark-96.png"))
+                PushButton.setIconSize(QtCore.QSize(30,30))
+                PushButton.setFixedWidth(70)
+                PushButton.setStyleSheet(StyleSheet)
+                PushButton.clicked.connect(self.on_clicked)
+                row.addWidget(PushButton)
+
+                # TYPE
+                label = QtWidgets.QLabel(item.Type)
+                row.addWidget(label)
+                # TR        
+                label = QtWidgets.QLabel(item.Tr)
+                row.addWidget(label)
+
+                layout.addLayout(row)
         
         w = QtWidgets.QWidget()
         w.setLayout(layout)
@@ -110,8 +119,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         MainBox.addWidget(scroll)
         return MainBox
-
-
 
 if __name__ == '__main__':
     App = PyQt5.QtWidgets.QApplication(sys.argv)

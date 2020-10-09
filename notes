@@ -1,1 +1,5 @@
 Python 3.7.6
+
+BUG#1:
+Ctrl + C'de handler fonksiyonu birden fazla tetiklendiğinden dolayı GUI fazlaca güncellenmektedir.
+Bundan ötürü segmentation fault hatasına düşüldüğü öngürülmektedir.
