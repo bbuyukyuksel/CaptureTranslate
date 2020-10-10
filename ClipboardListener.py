@@ -61,7 +61,7 @@ class ClipboardListener(threading.Thread):
                 self.__CTRL = False
                 self.__COPY = False
             else:
-                #print("debug", "twice trigger timeout!")
+                print("debug", "twice trigger timeout!")
                 pass
             
         self.wait.clear()
@@ -77,7 +77,7 @@ class ClipboardListener(threading.Thread):
             if key == keyboard.Key.cmd:
                 self.__CTRL = True
                 self.__CTRL_Time = time.time()
-        #print("tetiklendi", datetime.datetime.now())
+        print("tetiklendi", datetime.datetime.now())
         if not self.wait.is_set():
             self.__handler()
 

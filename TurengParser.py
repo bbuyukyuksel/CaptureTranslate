@@ -3,9 +3,17 @@ from bs4 import BeautifulSoup
 import os
 
 class Data():
+    __id = None
     __type = None
     __tr = None
     __en = None
+
+    @property
+    def ID(self):
+        return self.__id
+    @ID.setter
+    def ID(self, value):
+        self.__id = value
 
     @property
     def Type(self):
@@ -28,7 +36,9 @@ class Data():
     def En(self, value):
         self.__en = value
 
-    def __init__(self, Type = None, Tr= None, En = None):
+    def __init__(self, ID=None, Type=None, Tr=None, En=None):
+        if ID is not None:
+            self.__id = ID
         if Type is not None:
             self.__type = Type
         if Tr is not None:
@@ -37,7 +47,7 @@ class Data():
             self.__en = En
     
     def __str__(self):
-        return f"[{self.Type}], {self.Tr}, {self.En}"
+        return f"{self.ID} [{self.Type}], {self.Tr}, {self.En}"
     
 class TurengParser():
 

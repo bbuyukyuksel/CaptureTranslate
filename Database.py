@@ -2,13 +2,14 @@ import os
 import sqlite3
 
 class DB:
+    db = "test.db"
     table = 'wordlist'
     p_db = '.DB'
 
-    def __init__(self, dbname):
+    def __init__(self):
         if(not os.path.isdir(self.p_db)):
             os.makedirs(self.p_db, exist_ok=True)
-        self.conn = sqlite3.connect(os.path.join(self.p_db, dbname))
+        self.conn = sqlite3.connect(os.path.join(self.p_db, self.db))
         self.__create()        
 
     def __create(self):
@@ -24,6 +25,7 @@ class DB:
         # Create table
         c.execute(f'''SELECT * FROM {self.table}''')
         return c.fetchall()
+        
 
     def delete(self, id=None):
         c = self.conn.cursor()
@@ -51,12 +53,12 @@ class DB:
 
 
 if __name__ == '__main__':
-    db = DB('test.db')
+    db = DB()
 
     db.delete()
     db.resetID()
 
-    for i in range(5):
+    for i in range(25):
         db.append(f"type-{i}", f"tr-{i}", f"en-{i}")
 
     for i in db.fetch():
