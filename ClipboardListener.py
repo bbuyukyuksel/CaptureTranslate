@@ -3,8 +3,10 @@ import clipboard
 import threading
 import globals
 import time
-
+import sys
 import datetime
+
+from GUI import DBList
 
 class ClipboardListener(threading.Thread):
     __CTRL = False
@@ -33,7 +35,7 @@ class ClipboardListener(threading.Thread):
         if(time.time() - self.__CTRL_Time > 1):
             #print("debug", "CTRL RESET")
             self.__CTRL = False
-        
+
         if( time.time() - self.__COPY_Time > 1):
             #print("debug", "COPY RESET")
             self.__COPY = False
@@ -49,35 +51,55 @@ class ClipboardListener(threading.Thread):
             
             if(trigger_diff_time <= 2.0):
                 time.sleep(0.3)
-                try:
-                    self.__clipboard_item = clipboard.paste()
-                except:
-                    self.__clipboard_item = None
-
-                if self.__ftrigger is not None:
-                    self.__ftrigger(self.__clipboard_item)
-                print("debug", self.__clipboard_item)
-
+                # Process Clipboard Data
+                self.process()
                 self.__CTRL = False
                 self.__COPY = False
             else:
                 print("debug", "twice trigger timeout!")
                 pass
-            
         self.wait.clear()
-        
-    def on_press(self, key):
-        time.sleep(0.5)
+    
+    def process(self):
         try:
+            self.__clipboard_item = clipboard.paste()
+        except:
+            self.__clipboard_item = None
+
+        if self.__ftrigger is not None:
+            self.__ftrigger(self.__clipboard_item)
+        print("debug", self.__clipboard_item)
+    
+    
+    #windows-test
+    def on_activate_copy(self):
+        self.__COPY = True
+        self.__COPY_Time = time.time()
+        self.__CTRL = True
+        self.__CTRL_Time = time.time()
+        #print("tetiklendi", datetime.datetime.now(),self.__CTRL, self.__COPY)
+        if not self.wait.is_set():
+            self.__handler()
+   
+    def on_press(self, key):
+        try:
+            print("c", key.char)
             if key.char == 'c' or key.char == 'C':
                 self.__COPY = True
                 self.__COPY_Time = time.time()
 
         except AttributeError:
-            if key == keyboard.Key.cmd:
+            print("Speacial", key)
+            command_key = None
+            if sys.platform.startswith("win"):
+                command_key = keyboard.Key.ctrl_l
+            elif sys.platform.startswith("darwin"):
+                command_key = keyboard.Key.cmd
+            if key == command_key:
+                print("Command Key")
                 self.__CTRL = True
                 self.__CTRL_Time = time.time()
-        print("tetiklendi", datetime.datetime.now())
+        print("tetiklendi", datetime.datetime.now(),self.__CTRL, self.__COPY)
         if not self.wait.is_set():
             self.__handler()
 
@@ -85,14 +107,21 @@ class ClipboardListener(threading.Thread):
         if key == keyboard.Key.esc:
             # Stop listener
             print("Stop Listener")
-            globals.wait.set()
             return False
 
     def run(self):
-        # ...or, in a non-blocking fashion:
-        listener = keyboard.Listener(
-        on_press=self.on_press,
-        on_release=self.on_release)
+        # Set Keyboard Listener
+        listener = None
+        if sys.platform.startswith('win'):
+            listener = keyboard.GlobalHotKeys({
+                '<ctrl>+c':self.on_activate_copy,
+                #'<ctrl>+b':self.on_activate_wordlist,
+            })
+        else:
+            # OS-X
+            listener = keyboard.Listener(
+            on_press=self.on_press,
+            on_release=self.on_release)
         listener.start()
 
 
@@ -101,6 +130,24 @@ def myHandler(item):
     print("Item", item)
 
 if __name__ == '__main__':
-    ClipboardListener(myHandler).start()
-    input('..')
+    if sys.platform.startswith('win'):
+        def on_activate_ctrl_c():
+            print('<ctrl>+<c> pressed')
+        def on_activate_h():
+            print('<ctrl>+<alt>+h pressed')
+
+        def on_activate_i():
+            print('<ctrl>+<alt>+i pressed')
+
+        listener = keyboard.GlobalHotKeys({
+            '<ctrl>+<alt>+h': on_activate_h,
+            '<ctrl>+<alt>+i': on_activate_i,
+            '<ctrl>+c':on_activate_ctrl_c})
+        listener.start()
+        listener.join()    
+    else:
+        ClipboardListener(myHandler).start()
+        ClipboardListener.join()
+
+
 #endregion test-code 

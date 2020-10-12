@@ -20,7 +20,10 @@ class Translater(QtCore.QThread):
     def handler(self,text):
         if text is not None:
             items = TurengParser().search(text)
+            # Tabulate Console Print
+            '''
             table = map(lambda x: [x.Type, x.En, x.Tr], items)
             print(tabulate(table, headers=["Type", "En", "Tr"], showindex="always",     tablefmt="fancy_grid"))
+            '''
             self.signal_data_ready.emit(items)
 

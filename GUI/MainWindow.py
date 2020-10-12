@@ -8,10 +8,39 @@ from PyQt5.QtWidgets import QMessageBox
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import QCursor
 
+from GUI import DBList
 from GUI.MainWindowSignals import Translater
 from Database import DB
 
+from pynput import keyboard
+
+class HotKeyListener(QtCore.QThread):
+    on_activate_wordlist =  QtCore.pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        print("Listener")
+        listener = None
+        if sys.platform.startswith('win'):
+            listener = keyboard.GlobalHotKeys({
+                '<ctrl>+b':self.handler_activate_wordlist,
+        })
+        listener.start()
+        listener.join()
+    
+    def handler_activate_wordlist(self):
+        print("Emit")
+        self.on_activate_wordlist.emit()
+
+
+
+
 class MainWindow(QtWidgets.QMainWindow):
+    # DBList Window
+    w_dblist = None
+
     def __init__(self):
         super().__init__()
         self.db = DB()
@@ -19,16 +48,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.title = "Capture Translate"
         #self.winIcon()
-        self.top = 0
-        self.left = 0
-        self.width = 600
-        self.height = 600
         
+        self.width = 600
+        self.height = 550
+        if sys.platform.startswith('win'):
+            sizeObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
+            h_width = sizeObject.width() // 2
+            h_height = sizeObject.height() // 2
+            top = h_height - (self.height//2) 
+            left = h_width - (self.width//2)    
+        else:
+            top = 0
+            left = 0
+        self.top = top
+        self.left = left
         
         self.initWindow()
 
-    def initWindow(self):
-        #self.showFullScreen()
+    def initWindow(self):        
+        # Window Flags
+        flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(flags)
         
         self.setObjectName("body")
         #self.setWindowIcon()
@@ -40,7 +80,17 @@ class MainWindow(QtWidgets.QMainWindow):
         LabelUpdater = Translater()
         LabelUpdater.signal_data_ready.connect(self.onSignalDataReady)
         LabelUpdater.start()
+        
+        self.hkListener = HotKeyListener()
+        self.hkListener.start()
+        self.hkListener.on_activate_wordlist.connect(self.activate_wordlist)
 
+    def activate_wordlist(self):
+        if self.w_dblist == None:
+            self.w_dblist = DBList.Window()
+            self.w_dblist.show()
+        else:
+            self.w_dblist.show()
 
     def initLayout(self):
         # Set Layout
@@ -64,10 +114,11 @@ class MainWindow(QtWidgets.QMainWindow):
         buttonReply = QMessageBox().question(self, 'Message', f"Do you want to append '{selected_item.En.split('  ')[0]} - {selected_item.Tr}' to your word list?", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
         
         if buttonReply == QMessageBox.Yes:
-            self.db.delete(id=None)
+            # Append selected item into database.
+            print(selected_item.Type, selected_item.Tr, selected_item.En)
+            self.db.append(selected_item.Type, selected_item.Tr, selected_item.En.split('  ')[0])
             self.initLayout()
 
-        print(selected_item.Type, selected_item.Tr, selected_item.En)
         self.hide()
 
     def UI(self):

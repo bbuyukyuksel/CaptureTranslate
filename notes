@@ -1,5 +1,13 @@
-Python 3.7.6
+Python 3.7.6 - MAC
 
 BUG#1:
 Ctrl + C'de handler fonksiyonu birden fazla tetiklendiğinden dolayı GUI fazlaca güncellenmektedir.
 Bundan ötürü segmentation fault hatasına düşüldüğü öngürülmektedir.
+
+TODO#1:
+self.w = DBList.Window()
+self.w.show()
+Kullanımı için listener'da MainWindow threadinde tetiklenecek <ctrl>+b handler'ı ekle ve DBList windowunu göster.
+
+BUG#2:
+Window ctrl+c'de timeout reset gelmiyor.
